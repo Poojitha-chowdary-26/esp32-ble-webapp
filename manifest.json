@@ -1,0 +1,15 @@
+{
+  "name": "ESP32 BLE Graph",
+  "short_name": "BLE Graph",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "description": "Live Voltage & Current from ESP32 BLE",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ]
+}

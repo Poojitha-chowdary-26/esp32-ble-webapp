@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ESP32 BLE Graph</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h2>ESP32-C3 BLE Data</h2>
+  <button id="connect">Connect</button>
+  <canvas id="chart" width="400" height="200"></canvas>
+
+  <script>
+    let chart = new Chart(document.getElementById('chart'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'Voltage (V)', borderColor: 'red', data: [] },
+          { label: 'Current (A)', borderColor: 'blue', data: [] }
+        ]
+      },
+      options: {
+        animation: false,
+        scales: {
+          x: { display: true },
+          y: { display: true }
+        }
+      }
+    });
+
+    document.getElementById('connect').onclick = async () => {
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ name: 'ESP32-C3-BLE' }],
+        optionalServices: ['4fafc201-1fb5-459e-8fcc-c5c9c331914b']
+      });
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService('4fafc201-1fb5-459e-8fcc-c5c9c331914b');
+      const characteristic = await service.getCharacteristic('beb5483e-36e1-4688-b7f5-ea07361b26a8');
+
+      characteristic.startNotifications();
+      characteristic.addEventListener('characteristicvaluechanged', (event) => {
+        const value = new TextDecoder().decode(event.target.value);
+        console.log(value);
+
+        const regex = /Voltage: ([0-9.]+)V, Current: ([0-9.]+)A/;
+        const match = value.match(regex);
+        if (match) {
+          const voltage = parseFloat(match[1]);
+          const current = parseFloat(match[2]);
+
+          chart.data.labels.push('');
+          chart.data.datasets[0].data.push(voltage);
+          chart.data.datasets[1].data.push(current);
+
+          if (chart.data.labels.length > 50) {
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+            chart.data.datasets[1].data.shift();
+          }
+
+          chart.update();
+        }
+      });
+    };
+  </script>
+</body>
+</html>
